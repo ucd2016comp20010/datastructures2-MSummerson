@@ -22,7 +22,8 @@ public class SinglyLinkedList<E> implements List<E> {
          * @param n reference to a node that should follow the new node
          */
         public Node(E e, Node<E> n) {
-            // TODO
+            this.element = e;
+            this.next = n;
         }
 
         // Accessor methods
@@ -33,7 +34,7 @@ public class SinglyLinkedList<E> implements List<E> {
          * @return the element stored at the node
          */
         public E getElement() {
-            return null;
+            return element;
         }
 
         /**
@@ -43,7 +44,7 @@ public class SinglyLinkedList<E> implements List<E> {
          */
         public Node<E> getNext() {
             // TODO
-            return null;
+            return next;
         }
 
         // Modifier methods
@@ -54,7 +55,7 @@ public class SinglyLinkedList<E> implements List<E> {
          * @param n the node that should follow this one
          */
         public void setNext(Node<E> n) {
-            // TODO
+            this.next = n;
         }
     } //----------- end of nested Node class -----------
 
@@ -70,57 +71,157 @@ public class SinglyLinkedList<E> implements List<E> {
     private int size = 0;                      // number of nodes in the list
 
     public SinglyLinkedList() {
+        this.head = head;
+        this.size = 0;
     }              // constructs an initially empty list
 
     //@Override
     public int size() {
         // TODO
-        return 0;
+        return size;
     }
 
     //@Override
     public boolean isEmpty() {
-        // TODO
+         if  (size == 0) {
+            return true;
+        }
         return false;
     }
 
     @Override
     public E get(int position) {
-        // TODO
-        return null;
+        if(position < 0 || position >= size) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        Node<E> temp = head;
+
+        for (int i = 0; i < position; i++) {
+            temp = temp.next;
+        }
+
+        return temp.element;
     }
 
     @Override
     public void add(int position, E e) {
-        // TODO
+        if (position == 0){
+            addFirst(e);
+            return;
+        }
+
+        Node<E> temp = head;
+
+        for (int i = 0; i < position - 1; i++) {
+            if (temp == null) {
+                throw new IndexOutOfBoundsException();
+            }
+            temp = temp.next;
+        }
+
+        Node<E> newNode  =  new Node<E>(e, temp.next);
+        temp.next = newNode;
+        size++;
     }
 
 
     @Override
     public void addFirst(E e) {
-        // TODO
+        Node<E> newNode = new Node<>(e, head);
+
+        head = newNode;
+
+        size++;
     }
 
     @Override
     public void addLast(E e) {
-        // TODO
+         Node<E> newNode = new Node<>(e, null);
+
+        if (head == null) {
+            head = newNode;
+        }
+        else{
+            Node<E> temp = head;
+
+            while(temp.next!=null){
+                temp = temp.next;
+            }
+            temp.next = newNode;
+        }
+        size++;
     }
 
     @Override
     public E remove(int position) {
-        // TODO
-        return null;
+       // TODO
+        if (head == null) {
+            return null;
+        }
+
+        if (position == 0) {
+            E removedDate = head.element;
+            head = head.next;
+            size--;
+            return removedDate;
+        }
+
+        Node<E> temp = head;
+
+        for (int i = 0; i < position - 1; i++) {
+            if (temp == null || temp.next == null) {
+                throw new IndexOutOfBoundsException();
+            }
+            temp = temp.next;
+        }
+        Node<E> wanted = temp.next;
+
+        if (wanted == null) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        E removedData = wanted.element;
+
+        temp.next = wanted.next;
+
+        size--;
+        return removedData;
     }
 
     @Override
     public E removeFirst() {
-        // TODO
+         E removedData = head.element;
+        head = head.next;
+
+        size--;
         return null;
     }
 
     @Override
     public E removeLast() {
-        // TODO
+        if (head == null){
+            return null;
+        }
+
+        if (head.next == null){
+            E data = head.element;
+            head = null;
+            size--;
+            return data;
+        }
+
+        Node<E> temp = head;
+
+        while (temp.next.next != null){
+            temp = temp.next;
+        }
+
+        E removedDate = temp.next.element;
+
+        temp.next = null;
+
+        size--;
         return null;
     }
 
