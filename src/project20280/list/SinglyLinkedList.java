@@ -121,6 +121,28 @@ public class SinglyLinkedList<E> implements List<E> {
     @Override
     public E removeLast() {
         // TODO
+        if (head == null){
+            return null;
+        }
+
+        if (head.next == null){
+            E data = head.element;
+            head = null;
+            size--;
+            return data;
+        }
+
+        Node<E> temp = head;
+
+        while (temp.next.next != null){
+            temp = temp.next;
+        }
+
+        E removedDate = temp.next.element;
+
+        temp.next = null;
+
+        size--;
         return null;
     }
 
