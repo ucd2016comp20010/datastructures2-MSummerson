@@ -48,7 +48,7 @@ public class CircularlyLinkedList<E> implements List<E> {
         }
         Node<E> node = tail.next;
 
-        for (int j = i; j < size; j++) {
+        for (int j = 0; j < i; j++) {
             node = node.next;
         }
 
@@ -74,7 +74,7 @@ public class CircularlyLinkedList<E> implements List<E> {
         else{
 
             Node<E> node = tail.next;
-            for (int j = i; j < size; j++) {
+            for (int j = i; j <= size; j++) {
                 node = node.next;
             }
 
@@ -94,8 +94,10 @@ public class CircularlyLinkedList<E> implements List<E> {
         if  (i < 0 || i >= size) {
             throw new IndexOutOfBoundsException();
         }
+
+
         Node<E> prev = tail;
-        for (int j = i; j < size; j++) {
+        for (int j = 0; j < i; j++) {
             prev = prev.next;
         }
 
