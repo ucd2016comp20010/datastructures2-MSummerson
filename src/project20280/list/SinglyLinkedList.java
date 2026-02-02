@@ -191,11 +191,15 @@ public class SinglyLinkedList<E> implements List<E> {
 
     @Override
     public E removeFirst() {
-         E removedData = head.element;
+        if (head == null){
+            return null;
+        }
+
+        E removedData = head.element;
         head = head.next;
 
         size--;
-        return null;
+        return removedData;
     }
 
     @Override
@@ -222,7 +226,7 @@ public class SinglyLinkedList<E> implements List<E> {
         temp.next = null;
 
         size--;
-        return null;
+        return removedDate;
     }
 
     //@Override
