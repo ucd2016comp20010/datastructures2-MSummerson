@@ -270,6 +270,36 @@ public class SinglyLinkedList<E> implements List<E> {
         return sb.toString();
     }
 
+
+    /*
+    pseudocode
+
+    function reverseList()
+        if node is null
+            return
+
+        resursivecopy(node.next)
+        print node
+     */
+    public SinglyLinkedList<E> recursiveCopy(){
+
+        SinglyLinkedList<E> newlist = new SinglyLinkedList();
+        newlist.head = recursiveCopyHelper(head);
+        newlist.size = size;
+        return newlist;
+    }
+
+    private Node<E> recursiveCopyHelper(Node<E> node){
+
+        if (node == null){
+            return null;
+        }
+        Node<E> newNode = new Node<E> (node.getElement(), null);
+        newNode.setNext(recursiveCopyHelper(node.getNext()));
+        return newNode;
+
+    }
+
     public static void main(String[] args) {
         SinglyLinkedList<Integer> ll = new SinglyLinkedList<Integer>();
         System.out.println("ll " + ll + " isEmpty: " + ll.isEmpty());
