@@ -8,6 +8,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static project20280.stacksqueues.ArrayStack.convertToBinary;
 
 
 public class ArrayStackTest {
@@ -47,7 +48,7 @@ public class ArrayStackTest {
         Stack<Integer> s = new ArrayStack<>();
         for (int i = 0; i < 10; ++i)
             s.push(i);
-        assertEquals(9, Optional.ofNullable(s.top()));
+        assertEquals(9, Optional.ofNullable(s.top()).get());
     }
 
     @Test
@@ -55,7 +56,7 @@ public class ArrayStackTest {
         Stack<Integer> s = new ArrayStack<>();
         for (int i = 0; i < 10; ++i)
             s.push(i);
-        assertEquals(9, Optional.ofNullable(s.pop()));
+        assertEquals(9, Optional.ofNullable(s.pop()).get());
         assertEquals(9, s.size());
     }
 
@@ -65,5 +66,11 @@ public class ArrayStackTest {
         for (int i = 0; i < 10; ++i)
             s.push(i);
         assertEquals("[9, 8, 7, 6, 5, 4, 3, 2, 1, 0]", s.toString());
+    }
+
+    @Test
+    void testconvertToBinary(){
+        assertEquals("10111", convertToBinary(23));
+        assertEquals("111001000000101011000010011101010110110001100010000000000000", convertToBinary(1027010000000000000L));
     }
 }

@@ -2,6 +2,8 @@ package project20280.stacksqueues;
 
 import project20280.interfaces.Stack;
 
+import java.util.Arrays;
+
 public class ArrayStack<E> implements Stack<E> {
 
     /**
@@ -17,7 +19,7 @@ public class ArrayStack<E> implements Stack<E> {
     /**
      * Index of the top element of the stack in the array.
      */
-    private final int t = -1;                      // index of the top element in stack
+    private int t = -1;                      // index of the top element in stack
 
     /**
      * Constructs an empty stack using the default array capacity.
@@ -34,6 +36,7 @@ public class ArrayStack<E> implements Stack<E> {
     @SuppressWarnings({"unchecked"})
     public ArrayStack(int capacity) {        // constructs stack with given capacity
         // TODO
+        data = (E[]) new Object[capacity];
     }
 
     /**
@@ -65,6 +68,10 @@ public class ArrayStack<E> implements Stack<E> {
     @Override
     public void push(E e) {
         // TODO
+        if (size() == data.length) {
+            throw new IllegalStateException("Stack is full");
+        }
+        data[++t] = e;
     }
 
     /**
@@ -75,7 +82,8 @@ public class ArrayStack<E> implements Stack<E> {
     @Override
     public E top() {
         // TODO
-        return null;
+        if(isEmpty()){return null;}
+        return data[t];
     }
 
     /**
@@ -86,9 +94,47 @@ public class ArrayStack<E> implements Stack<E> {
     @Override
     public E pop() {
         // TODO
-        return null;
+        if(isEmpty()){return null;}
+        E answer = data[t];
+        data[t] = null;
+        t--;
+        return answer;
     }
 
+    public static <E> void reverse(E[] arr) {
+        Stack<E> stack = new ArrayStack<>(arr.length);
+        for (int i = 0; i < arr.length; i++) {
+            stack.push(arr[i]);
+        }
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = stack.pop();
+        }
+    }
+
+
+    static String convertToBinary (long dec){
+        // TODO
+        if(dec == 0){return "0";}
+
+        ArrayStack<Long> newStack = new ArrayStack<>();
+
+        while (dec > 0){
+            //google said that we wanted to modulate it by 2 every loop till 0
+            // since its a binary value (determines what the point represents
+            long remains = dec % 2;
+            newStack.push(remains);
+            //half it since thats how you shrink a binary value as we go
+            dec /= 2;
+        }
+
+        //string builder since I didnt wanna try and figure out the
+        // normal way to do it
+        StringBuilder sb = new StringBuilder();
+        while (!newStack.isEmpty()){
+            sb.append(newStack.pop());
+        }
+        return sb.toString();
+    }
     /**
      * Produces a string representation of the contents of the stack.
      * (ordered from top to bottom). This exists for debugging purposes only.
@@ -130,5 +176,15 @@ public class ArrayStack<E> implements Stack<E> {
         S.push(8);                              // contents: (7, 9, 6, 8)
         System.out.println(S.pop());            // contents: (7, 9, 6)  outputs 8
         System.out.println(S);
+
+        Integer[ ] a = {4, 8, 15, 16, 23, 42}; // autoboxing allows this
+        String[ ] s = {"Jack", "Kate", "Hurley", "Jin", "Michael"};
+        System.out.println("a = " + Arrays.toString(a));
+        System.out.println("s = " + Arrays.toString(s));
+        System.out.println("Reversing...");
+        reverse(a);
+        reverse(s);
+        System.out.println("a = " + Arrays.toString(a));
+        System.out.println("s = " + Arrays.toString(s));
     }
 }

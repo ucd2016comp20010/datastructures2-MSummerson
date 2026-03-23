@@ -6,6 +6,69 @@ import java.util.Iterator;
 
 public class SinglyLinkedList<E> implements List<E> {
 
+    public SinglyLinkedList<E> sortedMerge(SinglyLinkedList<E> listed){
+
+        SinglyLinkedList<E> result = new SinglyLinkedList<>();
+
+        Node<E> current = head;
+        Node<E> current2 = (Node<E>) listed.head;
+
+        Node<E> temp = new Node<E>(null, null);
+        Node<E> tail = temp;
+
+        while(current2 != null && current != null ){
+            Comparable<E> value = (Comparable<E>) current.getElement();
+            E value2 = current2.getElement();
+
+            if (value.compareTo(value2) <= 0){
+                tail.next = new Node<E>(current.getElement(), null);
+                current = current.next;
+            }
+            else{
+                tail.next = new Node<E>(current2.getElement(), tail);
+                current2  = current2.next;
+            }
+
+            tail = tail.next;
+            result.size++;
+        }
+
+
+        while (current != null){
+            tail.next = new Node<E>(current.getElement(), null);
+            current = current.next;
+            tail = tail.next;
+            result.size++;
+        }
+
+        while (current2 != null){
+            tail.next = new Node<E>(current2.getElement(), null);
+            current2 = current2.next;
+            tail = tail.next;
+            result.size++;
+        }
+
+        result.head = temp.next;
+        return result;
+
+    }
+
+    public SinglyLinkedList<E> cloner() {
+
+        SinglyLinkedList<E> newList = new SinglyLinkedList<>();
+
+        Node<E> current = head;
+
+        while (current != null){
+            newList.addLast(current.getElement());
+
+            current = current.next;
+        }
+
+        return newList;
+
+    }
+
     private static class Node<E> {
 
         private final E element;            // reference to the element stored at this node
@@ -201,11 +264,15 @@ public class SinglyLinkedList<E> implements List<E> {
 
     @Override
     public E removeFirst() {
+        if (head == null){
+            return null;
+        }
+
         E removedData = head.element;
         head = head.next;
 
         size--;
-        return null;
+        return removedData;
     }
 
     @Override
@@ -233,7 +300,35 @@ public class SinglyLinkedList<E> implements List<E> {
         temp.next = null;
 
         size--;
-        return null;
+        return removedDate;
+    }
+
+        /*
+    pseudocode
+
+    function printReverse(node):
+    if node is null:
+        return
+    printReverse(node.next)
+    print node.element
+     */
+
+    public void reverse(){
+        Node<E> prev = null;
+        Node<E> current = head;
+        Node<E> next = null;
+
+        while (current != null){
+            next = current.next;
+            current.next = prev;
+
+            prev = current;
+            current = next;
+
+        }
+
+        head = prev;
+
     }
 
     //@Override
@@ -300,24 +395,46 @@ public class SinglyLinkedList<E> implements List<E> {
 
     }
 
+    //git hooks: set before a commit, checks for erros or warning
     public static void main(String[] args) {
-        SinglyLinkedList<Integer> ll = new SinglyLinkedList<Integer>();
-        System.out.println("ll " + ll + " isEmpty: " + ll.isEmpty());
-        //LinkedList<Integer> ll = new LinkedList<Integer>();
+        // 1. Create and populate the first sorted list
+        SinglyLinkedList<Integer> l1 = new SinglyLinkedList<>();
+        l1.addLast(2);
+        l1.addLast(6);
+        l1.addLast(20);
+        l1.addLast(24);
+        System.out.println("List 1: " + l1);
 
-        ll.addFirst(0);
-        ll.addFirst(1);
-        ll.addFirst(2);
-        ll.addFirst(3);
-        ll.addFirst(4);
-        ll.addLast(-1);
-        //ll.removeLast();
-        //ll.removeFirst();
-        //System.out.println("I accept your apology");
-        //ll.add(3, 2);
-        System.out.println(ll);
-        ll.remove(5);
-        System.out.println(ll);
+        System.out.println("reversed list 1: ");
+        SinglyLinkedList<Integer> l3 = l1.cloner();
+        l3.reverse();
+        System.out.println(l3);
 
+        // 2. Create and populate the second sorted list
+        SinglyLinkedList<Integer> l2 = new SinglyLinkedList<>();
+        l2.addLast(1);
+        l2.addLast(3);
+        l2.addLast(5);
+        l2.addLast(8);
+        l2.addLast(12);
+        l2.addLast(19);
+        l2.addLast(25);
+        System.out.println("List 2: " + l2);
+
+        // 3. Merge them
+        SinglyLinkedList<Integer> result = l1.sortedMerge(l2);
+
+        // 4. Print the result
+        System.out.println("Merged Result: " + result);
+        System.out.println("Result Size: " + result.size());
+
+        //5. Reverse the list
+        System.out.println("Reverse of L1: " + l1);
+
+        //6. Copy the list
+        SinglyLinkedList<Integer> s6 = l1.recursiveCopy();
+        l1.addLast(22);
+        System.out.println("Copy of L1: " + s6);
+        System.out.println("OG of L1: " + l1);
     }
 }

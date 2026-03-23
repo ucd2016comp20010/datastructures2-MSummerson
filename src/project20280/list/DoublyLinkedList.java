@@ -80,7 +80,7 @@ public class DoublyLinkedList<E> implements List<E> {
         // TODO
         Node<E> succ = head;
 
-        for (int j = 0; j < i; j++){
+        for (int j = 0; j <= i; j++){
             succ = succ.next;
         }
 

@@ -12,7 +12,6 @@ public class Wk1 {
         //double average = ...;
     }
     public static void main(String [] args) {
-
         q1();
         //is github working?
     }
