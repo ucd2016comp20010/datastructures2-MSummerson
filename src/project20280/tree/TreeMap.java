@@ -5,8 +5,9 @@ import project20280.interfaces.Position;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Random;
-import java.util.function.Consumer;
+
 
 /**
  * An implementation of a sorted map using a binary search tree.
@@ -60,7 +61,13 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
          * Relinks a parent node with its oriented child node.
          */
         private void relink(Node<Entry<K, V>> parent, Node<Entry<K, V>> child, boolean makeLeftChild) {
-            // TODO
+            child.setParent(parent);
+            if (makeLeftChild) {
+                parent.setLeft(child);
+            }
+            else {
+                parent.setRight(child);
+            }
         }
 
         /**
@@ -78,7 +85,25 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
          * Caller should ensure that p is not the root.
          */
         public void rotate(Position<Entry<K, V>> p) {
-            // TODO
+            Node<Entry<K,V>> x = validate(p);
+            Node<Entry<K,V>> y = x.getParent( ); // we assume this exists
+            Node<Entry<K,V>> z = y.getParent( ); // grandparent (possibly null)
+            if (z == null) {
+                root = x; // x becomes root of the tree
+                x.setParent(null);
+            }
+            else{
+                relink(z, x, y == z.getLeft( ));
+            } // x becomes direct child of z
+            // now rotate x and y, including transfer of middle subtree
+            if (x == y.getLeft( )) {
+                relink(y, x.getRight( ), true); // x’s right child becomes y’s left
+                relink(x, y, false); // y becomes x’s right child
+            }
+            else {
+                relink(y, x.getLeft( ), false); // x’s left child becomes y’s right
+                relink(x, y, true); // y becomes left child of x
+            }
         }
 
         /**
@@ -110,8 +135,16 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
          * Caller should ensure that x has a grandparent.
          */
         public Position<Entry<K, V>> restructure(Position<Entry<K, V>> x) {
-            // TODO
-            return null;
+            Position<Entry<K, V>> y = parent(x);
+            Position<Entry<K, V>> z = parent(y);
+            if ((x == right(y)) == (y == right(z))) { // matching alignments
+                rotate(y); // single rotation (of y)
+                return y; // y is new subtree root
+            } else { // opposite alignments
+                rotate(x); // double rotation (of x)
+                rotate(x);
+                return x; // x is new subtree root
+            }
         }
     } // ----------- end of nested BalanceableBinaryTree class -----------
 
@@ -243,8 +276,19 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      * @return Position holding key, or last node reached during search
      */
     private Position<Entry<K, V>> treeSearch(Position<Entry<K, V>> p, K key) {
-        // TODO
-        return null;
+        if (isExternal(p)){
+            return p;
+        }
+        int comp = compare(key, p.getElement());
+        if (comp == 0) {
+            return p;
+        }
+        else if (comp < 0) {
+            return treeSearch(left(p), key);
+        }
+        else {
+            return treeSearch(right(p), key);
+        }
     }
 
     /**
@@ -254,8 +298,11 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      * @return Position with minimal key in subtree
      */
     protected Position<Entry<K, V>> treeMin(Position<Entry<K, V>> p) {
-        // TODO
-        return null;
+        Position<Entry<K,V>> walk = p;
+        while (isInternal(walk)) {
+            walk = left(walk);
+        }
+        return parent(walk); // we want the parent of the leaf
     }
 
     /**
@@ -265,8 +312,11 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      * @return Position with maximum key in subtree
      */
     protected Position<Entry<K, V>> treeMax(Position<Entry<K, V>> p) {
-        // TODO
-        return null;
+        Position<Entry<K,V>> walk = p;
+        while (isInternal(walk)) {
+            walk = right(walk);
+        }
+        return parent(walk); // we want the parent of the leaf
     }
 
     /**
@@ -278,8 +328,13 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      */
     @Override
     public V get(K key) throws IllegalArgumentException {
-        // TODO
-        return null;
+        checkKey(key); //has a chance to throw illegal
+        Position<Entry<K, V>> p = treeSearch(root(), key);
+        rebalanceAccess(p); //hook for balancing
+        if(isExternal(p)){ //unsucsseful search
+            return null;
+        }
+        return p.getElement().getValue(); //match found
     }
 
     /**
@@ -294,8 +349,20 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      */
     @Override
     public V put(K key, V value) throws IllegalArgumentException {
-        // TODO
-        return null;
+        checkKey(key);
+        Entry<K, V> newEntry = new MapEntry<>(key, value);
+        Position<Entry<K, V>> p = treeSearch(root(), key);
+        if(isExternal(p)){ //key exsists
+            expandExternal(p, newEntry);
+            rebalanceInsert(p); //hook for the balanced tree
+            return null;
+        }
+        else{ //replacing a key
+            V old = p.getElement().getValue();
+            set(p, newEntry);
+            rebalanceAccess(p); //hook for the balanced tree
+            return old;
+        }
     }
 
     /**
@@ -308,8 +375,26 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      */
     @Override
     public V remove(K key) throws IllegalArgumentException {
-        // TODO
-        return null;
+        checkKey(key);
+        Position<Entry<K, V>> p = treeSearch(root(), key);
+        if(isExternal(p)){
+            rebalanceAccess(p);
+            return null;
+        }
+        else{
+            V old = p.getElement().getValue();
+            if(isInternal(left(p)) && isInternal(right(p))){
+                Position<Entry<K, V>> replacement = treeMax(left(p));
+                set(p, replacement.getElement());
+                p = replacement;
+            }
+            Position<Entry<K, V>> leaf = (isExternal(left(p)) ? left(p) : right(p));
+            Position<Entry<K, V>> sib = sibling(leaf);
+            remove(leaf);
+            remove(p);
+            rebalanceDelete(sib);
+            return old;
+        }
     }
 
     // additional behaviors of the SortedMap interface
@@ -348,8 +433,18 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      */
     @Override
     public Entry<K, V> ceilingEntry(K key) throws IllegalArgumentException {
-        // TODO
-        return null;
+        checkKey(key);
+        Position<Entry<K, V>> p = treeSearch(root(), key);
+        if (isInternal(p)){
+            return p.getElement();
+        }
+        while (!isRoot(p) && p == right(parent(p))){
+            p = parent(p);
+        }
+        if (isRoot(p)){
+            return null;
+        }
+        return parent(p).getElement();
     }
 
     /**
@@ -362,8 +457,20 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      */
     @Override
     public Entry<K, V> floorEntry(K key) throws IllegalArgumentException {
-        // TODO
-        return null;
+        checkKey(key); // may throw IllegalArgumentException
+        Position<Entry<K,V>> p = treeSearch(root( ), key);
+        if (isInternal(p)) {
+            return p.getElement(); // exact match
+        }
+        while (!isRoot(p)) {
+            if (p == right(parent(p))) {
+                return parent(p).getElement(); // parent has next lesser key
+            }
+            else {
+                p = parent(p);
+            }
+        }
+    return null; // no such floor exists
     }
 
     /**
@@ -376,8 +483,20 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      */
     @Override
     public Entry<K, V> lowerEntry(K key) throws IllegalArgumentException {
-        // TODO
-        return null;
+        checkKey(key); // may throw IllegalArgumentException
+        Position<Entry<K,V>> p = treeSearch(root( ), key);
+         if (isInternal(p) && isInternal(left(p))){
+          return treeMax(left(p)).getElement( ); // this is the predecessor to p
+        } // otherwise, we had failed search, or match with no left child
+        while (!isRoot(p)) {
+            if (p == right(parent(p))) {
+                return parent(p).getElement(); // parent has next lesser key
+            }
+            else{
+                p = parent(p);
+            }
+        }
+    return null; // no such lesser key exists
     }
 
     /**
@@ -390,8 +509,18 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      */
     @Override
     public Entry<K, V> higherEntry(K key) throws IllegalArgumentException {
-        // TODO
-        return null;
+        checkKey(key); // may throw IllegalArgumentException
+        Position<Entry<K,V>> p = treeSearch(root( ), key);
+        if (isInternal(p) && isInternal(right(p))) {
+            return treeMin(right(p)).getElement(); // exact match
+        }
+        while (!isRoot(p) && p == right(parent(p))) {
+            p = parent(p);
+        }
+        if (isRoot(p)) {
+            return null;
+        }
+        return parent(p).getElement();
     }
 
     // Support for iteration
@@ -413,7 +542,11 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
     }
 
     public String toString() {
-        return tree.toString();
+        ArrayList<K> keys = new ArrayList<>();
+        for (Entry<K, V> entry : entrySet()) {
+            keys.add(entry.getKey());
+        }
+        return keys.toString();
     }
 
     /**
@@ -427,8 +560,28 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
      */
     @Override
     public Iterable<Entry<K, V>> subMap(K fromKey, K toKey) throws IllegalArgumentException {
-        // TODO
-        return null;
+        ArrayList<Entry<K,V>> buffer = new ArrayList<>(size( ));
+        if (compare(fromKey, toKey) < 0) { // ensure that fromKey < toKey
+            subMapRecurse(fromKey, toKey, root(), buffer);
+        }
+        return buffer;
+    }
+
+    private void subMapRecurse(K fromKey, K toKey, Position<Entry<K,V>> p,
+        ArrayList<Entry<K,V>> buffer) {
+        if (isInternal(p)) {
+            if (compare(p.getElement(), fromKey) < 0) {
+                // p's key is less than fromKey, so any relevant entries are to the right
+                subMapRecurse(fromKey, toKey, right(p), buffer);
+            }
+            else{
+                subMapRecurse(fromKey, toKey, left(p), buffer); // first consider left subtree
+                if (compare(p.getElement(), toKey) < 0) { // p is within range
+                    buffer.add(p.getElement()); // so add it to buffer, and consider
+                    subMapRecurse(fromKey, toKey, right(p), buffer); // right subtree as well
+                }
+            }
+        }
     }
 
     protected void rotate(Position<Entry<K, V>> p) {
@@ -464,32 +617,169 @@ public class TreeMap<K, V> extends AbstractSortedMap<K, V> {
     }
 
     public static void main(String[] args) {
-        TreeMap<Integer, Integer> treeMap = new TreeMap<Integer, Integer>();
+//        TreeMap<Integer, Integer> treeMap = new TreeMap<Integer, Integer>();
+//
+//        Random rnd = new Random();
+//        int n_max = 50;
+//        int n = 100;
+//        rnd.ints(1, n_max).limit(n).distinct().boxed().forEach(x -> treeMap.put(x, x));
+////
+////        Consumer<Integer> modify = x -> {
+////            if (rnd.nextFloat() > 0.5)
+////                treeMap.put(x, 0);
+////            else
+////                treeMap.remove(x);
+////        };
+//        BinaryTreePrinter<Entry<Integer, Integer>> btp = new BinaryTreePrinter<>(treeMap.tree);
+//        System.out.println(btp.print());
+//
+////        rnd.ints(1, n_max).limit(10000000).boxed().forEach(modify);
+//        System.out.println(btp.print());
+//
+//        AVLTreeMap<Integer, Integer> avl = new AVLTreeMap<Integer, Integer>();
+//        for (Position<Entry<Integer, Integer>> i : treeMap.tree.inorder()) {
+//            if (i.getElement() != null) {
+//                avl.put(i.getElement().getKey(), 0);
+//            }
+//        }
+//        System.out.println(avl.toBinaryTreeString());
 
+
+//        //Q2
+//        // initialize the treemap and Random vals
+//        TreeMap<Integer, Integer> bst = new TreeMap<>();
+//        Random rnd = new Random();
+//        int n_max = 50;
+//        int n = 20;
+//
+//        // populate the tree with random integers
+//        rnd.ints(1, n_max)
+//                .distinct()
+//                .limit(n)
+//                .boxed()
+//                .forEach(x -> bst.put(x, x));
+//
+//        // use the BinaryTreePrinter to see the structure
+//        System.out.println("Tree Structure:");
+//        System.out.println(bst.toBinaryTreeString());
+//
+//        // print the traversal to check sorting
+//        System.out.println("Inorder Traversal (Should be sorted):");
+//
+//        // we now check the actual tree and call its inorder method
+//        System.out.println("\nInorder Traversal (Sorted):");
+//        for (var entry : bst.entrySet()) {
+//            System.out.print(entry.getKey() + " ");
+//        }
+
+
+//        //Q3
+//        TreeMap<Integer, Integer> bst = new TreeMap<>();
+//        Random rnd = new Random();
+//        int n_max = 200;
+//        int n = 100;
+//
+//        rnd.ints(1, 1000)
+//                .distinct()
+//                .limit(n)
+//                .boxed()
+//                .forEach(x -> bst.put(x, x));
+//
+//        //System.out.println("Initial Height: " + bst.tree.height(bst.root()));
+//        System.out.println("Tree Structure:");
+//        System.out.println(bst.toBinaryTreeString());
+//        System.out.println("Height wihtout root = " + bst.tree.height());
+//        System.out.println("Current Size = " + bst.size());
+//
+//        // ensure we put() a node which doesn't already exist in the tree
+//        // ensure we remove() a node which does exist in the tree
+//        int n_trials = 10000;
+//        for (int i = 0; i < n_trials; ++i) {
+//            var keyset = bst.keySet();
+//            List<Integer> target = new ArrayList<>();
+//            keyset.forEach(target::add);
+//            if (rnd.nextFloat() > 0.5) {
+//                int newI = rnd.nextInt(2000);
+//                bst.put(newI, newI);
+//            } else {
+//                if (!target.isEmpty()) {
+//                    Integer targetI = target.get(rnd.nextInt(target.size()));
+//                    bst.remove(targetI);
+//                }
+//            }
+//        }
+//        //System.out.println("Final Height after " + n_trials + " trials: " + bst.tree.height(bst.root()));
+//        System.out.println("Tree Structure after removal:");
+//        System.out.println(bst.toBinaryTreeString());
+//        System.out.println("Height wihtout root = " + bst.tree.height());
+//        System.out.println("Current Size = " + bst.size());
+
+
+//        //Q4
+//        int[] sizes = {1000, 5000, 10000, 20000};
+//        Random rnd = new Random();
+//
+//        for (int n : sizes) {
+//            List<Integer> data = new ArrayList<>();
+//            for (int i = 0; i < n; i++) data.add(rnd.nextInt(n * 10));
+//
+//            System.out.println("Testing n = " + n );
+//
+//            // unbalanced treemap
+//            long start = System.nanoTime();
+//            TreeMap<Integer, Integer> bst = new TreeMap<>();
+//            for (int x : data) bst.put(x, x);
+//            var entries1 = bst.entrySet();
+//            System.out.println("Custom TreeMap:  " + (System.nanoTime() - start) / 1_000_000.0 + " ms");
+//
+//            // balance AVL
+//            start = System.nanoTime();
+//            AVLTreeMap<Integer, Integer> avl = new AVLTreeMap<>();
+//            for (int x : data) avl.put(x, x);
+//            var entries2 = avl.entrySet();
+//            System.out.println("Custom AVLTree:  " + (System.nanoTime() - start) / 1_000_000.0 + " ms");
+//
+//            //using only javautil
+//            start = System.nanoTime();
+//            java.util.TreeMap<Integer, Integer> jTree = new java.util.TreeMap<>();
+//            for (int x : data) jTree.put(x, x);
+//            var entries3 = jTree.entrySet();
+//            System.out.println("Java Util Tree:  " + (System.nanoTime() - start) / 1_000_000.0 + " ms");
+//            System.out.println();
+//
+//        }
+
+
+        // Treap test
+        int[] sizes = {1000, 10000, 50000};
         Random rnd = new Random();
-        int n_max = 50;
-        int n = 100;
-        // rnd.ints(1, n_max).limit(n).distinct().boxed().forEach(x -> treeMap.put(x,
-        // x));
 
-        Consumer<Integer> modify = x -> {
-            if (rnd.nextFloat() > 0.5)
-                treeMap.put(x, 0);
-            else
-                treeMap.remove(x);
-        };
-        BinaryTreePrinter<Entry<Integer, Integer>> btp = new BinaryTreePrinter<>(treeMap.tree);
-        System.out.println(btp.print());
+        System.out.printf("%-15s | %-12s | %-10s | %-8s\n", "Size", "Tree Type", "Time (ms)", "Height");
+        System.out.println("------------------------------------------------------------");
 
-        rnd.ints(1, n_max).limit(10000000).boxed().forEach(modify);
-        System.out.println(btp.print());
+        for (int n : sizes) {
+            List<Integer> data = new ArrayList<>();
+            for (int i = 0; i < n; i++) data.add(rnd.nextInt(n * 10));
 
-        AVLTreeMap<Integer, Integer> avl = new AVLTreeMap<Integer, Integer>();
-        for (Position<Entry<Integer, Integer>> i : treeMap.tree.inorder()) {
-            if (i.getElement() != null) {
-                avl.put(i.getElement().getKey(), 0);
+            // Define the trees to test
+            TreeMap<Integer, Integer>[] trees = new TreeMap[]{
+                    new TreeMap<>(),    // Unbalanced
+                    new AVLTreeMap<>(), // AVL
+                    new Treap<>()       // Your New Treap
+            };
+            String[] labels = {"BST", "AVL", "Treap"};
+
+            for (int i = 0; i < trees.length; i++) {
+                long start = System.nanoTime();
+                for (int x : data) trees[i].put(x, x);
+                long end = System.nanoTime();
+
+                double ms = (end - start) / 1_000_000.0;
+                int height = trees[i].tree.height();
+
+                System.out.printf("%-15d | %-12s | %-10.2f | %-8d\n", n, labels[i], ms, height);
             }
         }
-        System.out.println(avl.toBinaryTreeString());
+
     }
 }
