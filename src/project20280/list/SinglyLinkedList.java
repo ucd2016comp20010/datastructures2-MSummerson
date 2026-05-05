@@ -303,16 +303,6 @@ public class SinglyLinkedList<E> implements List<E> {
         return removedDate;
     }
 
-        /*
-    pseudocode
-
-    function printReverse(node):
-    if node is null:
-        return
-    printReverse(node.next)
-    print node.element
-     */
-
     public void reverse(){
         Node<E> prev = null;
         Node<E> current = head;
@@ -365,37 +355,6 @@ public class SinglyLinkedList<E> implements List<E> {
         return sb.toString();
     }
 
-
-    /*
-    pseudocode
-
-    function reverseList()
-        if node is null
-            return
-
-        resursivecopy(node.next)
-        print node
-     */
-    public SinglyLinkedList<E> recursiveCopy(){
-
-        SinglyLinkedList<E> newlist = new SinglyLinkedList();
-        newlist.head = recursiveCopyHelper(head);
-        newlist.size = size;
-        return newlist;
-    }
-
-    private Node<E> recursiveCopyHelper(Node<E> node){
-
-        if (node == null){
-            return null;
-        }
-        Node<E> newNode = new Node<E> (node.getElement(), null);
-        newNode.setNext(recursiveCopyHelper(node.getNext()));
-        return newNode;
-
-    }
-
-    //git hooks: set before a commit, checks for erros or warning
     public static void main(String[] args) {
         // 1. Create and populate the first sorted list
         SinglyLinkedList<Integer> l1 = new SinglyLinkedList<>();
@@ -427,14 +386,5 @@ public class SinglyLinkedList<E> implements List<E> {
         // 4. Print the result
         System.out.println("Merged Result: " + result);
         System.out.println("Result Size: " + result.size());
-
-        //5. Reverse the list
-        System.out.println("Reverse of L1: " + l1);
-
-        //6. Copy the list
-        SinglyLinkedList<Integer> s6 = l1.recursiveCopy();
-        l1.addLast(22);
-        System.out.println("Copy of L1: " + s6);
-        System.out.println("OG of L1: " + l1);
     }
 }
